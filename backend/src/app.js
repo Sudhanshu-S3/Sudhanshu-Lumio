@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const summaryRoutes = require('./api/routes/summary.routes.js');
+const shareRoutes = require('./api/routes/share.routes.js')
 
 const app = express();
 
@@ -15,5 +16,6 @@ app.get('/', (req,res) => {
 
 
 app.use('/api/summary', summaryRoutes);
+app.use('/api/share', shareRoutes);
 
 module.exports = app;
