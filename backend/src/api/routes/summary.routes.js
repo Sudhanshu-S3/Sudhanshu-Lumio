@@ -1,9 +1,7 @@
 const express = require('express');
+const { generateSummary } = require('../controllers/summary.controller');
 const router = express.Router();
-const summaryController = require('../controllers/summary.controller');
 
-// Setup checks 
-
-router.post('/generate', summaryController.generateSummary);
+router.post('/generate', generateSummary);
 
 module.exports = router;

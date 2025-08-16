@@ -6,7 +6,7 @@ const emailService = require('../services/email.service');
 jest.mock('../services/email.service');
 
 describe('Share API', () => {
-  describe('POST /api/v1/share', () => {
+  describe('POST /api/share', () => {
     test('should return 200 and a success message when email is sent', async () => {
       emailService.sendSummaryEmail.mockResolvedValue({ messageId: 'test-id' });
 

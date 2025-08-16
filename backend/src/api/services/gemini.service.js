@@ -1,31 +1,28 @@
 const axios = require('axios');
 const config = require('../../config');
 
-const generateSummary = async (transcript, promt) =>{
-    const apiKey = config.GEMINI_API_KEY;
+/**
+ * Minimal local summarizer for development.
+ * Replace with real AI integration when API key/config is set.
+ */
+async function generateSummary(transcript, prompt) {
+  if (!transcript || !prompt) {
+    throw new Error('transcript and prompt are required');
+  }
 
-    if(!apiKey){
-        throw new Error('GEMINI_API_KEY is not set in the environment variables.');
-    }
+  // Simple heuristic summary so the app works in dev:
+  const sentences = transcript
+    .replace(/\s+/g, ' ')
+    .split(/(?<=[.!?])\s+/)
+    .filter(Boolean)
+    .slice(0, 5);
 
-    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-preview-0514:generateContent?key=${apiKey}`;
-    const fullPrompt = `${prompt}:\n\n---\n\n${transcript}`;
+  const wantsBullets = /bullet|point|list/i.test(prompt);
+  const summary = wantsBullets
+    ? sentences.map(s => `• ${s.trim()}`).join('\n')
+    : sentences.join(' ');
 
-    const payload = {
-        contents:[{
-            parts:[{text :fullPrompt}]
-        }]
-    };
+  return summary || transcript.slice(0, 300);
+}
 
-    try{
-        const response = await axios.post(apiUrl, payload);
-        return response.data.condidates[0].content.parts[0].text.trim();
-    } catch (error) {
-        console.error('Error from Gemini API:', error.response ? error.response.data : error.message);
-        throw new Error('Failed to generate summary from AI service.');
-    }
-};
-
-module.exports = {
-  generateSummary,
-};
+module.exports = { generateSummary };

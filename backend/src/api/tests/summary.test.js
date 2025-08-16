@@ -13,7 +13,7 @@ describe('Summary API', () => {
 
     });
 
-    describe('POST /api/v1/summary/generate', () => {
+    describe('POST /api/summary/generate', () => {
 
     test('should return a 200 status and the generated summary on success', async () => {
       const mockSummary = 'This is a mocked summary.';
@@ -59,7 +59,7 @@ describe('Summary API', () => {
         
       expect(response.statusCode).toBe(500);
       expect(response.body.error).toBe('AI service failed');
-      
+
     });
   });
 });

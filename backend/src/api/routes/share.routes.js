@@ -1,7 +1,7 @@
 const express = require('express');
+const { shareSummary } = require('../controllers/share.controllers');
 const router = express.Router();
-const shareController = require('../controllers/share.controllers');
 
-router.post('/', shareController.shareSummary);
+router.post('/', shareSummary);
 
 module.exports = router;
