@@ -17,14 +17,14 @@ AI-powered meeting notes summarizer and sharer. Paste or upload a transcript, ge
 Flow (matches the diagram):
 1. User uploads transcript and optional prompt.
 2. Clicks “Generate Summary”.
-3. Frontend calls POST `/api/v1/summary/generate`.
+3. Frontend calls POST `/api/summary/generate`.
 4. Backend requests summary from Gemini API.
 5. Gemini returns summary to backend.
 6. Backend sends summary to frontend.
 7. Frontend displays an editable summary.
 8. User edits summary and enters recipient email.
 9. User clicks “Share”.
-10. Frontend calls POST `/api/v1/share`.
+10. Frontend calls POST `/api/share`.
 11. Backend sends email via SMTP.
 12. SMTP confirms send.
 13. Backend returns success to frontend.
@@ -103,7 +103,7 @@ Adjust names if they differ from your config files.
 
 ## API
 
-Base URL: `http://localhost:4000/api/v1`
+Base URL: `http://localhost:4000/api`
 
 - POST `/summary/generate`
   - Body: `{ "transcript": "string", "prompt": "optional string" }`
@@ -141,6 +141,8 @@ curl -X POST "$REACT_APP_API_BASE/api/v1/summary/generate" \
 
 - Create a branch, add tests, open a PR with a clear description.
 
-## Keywords
+## Author
 
-AI, meeting notes, summarizer, transcript, email, share, Gemini, LLM, Node.js, Express, React, Tailwind, REST API, SMTP, Docker, testing
+Sudhanshu
+
+
