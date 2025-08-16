@@ -1,47 +1,33 @@
 import express from 'express';
 import cors from 'cors';
+import config from './config/index.js';
 import summaryRoutes from './api/routes/summary.routes.js';
 import shareRoutes from './api/routes/share.routes.js';
 
-const app = express();
-
-// Parse FRONTEND_ORIGIN env (comma or space separated). Supports wildcard like https://*.vercel.app
-function parseOriginsFromEnv() {
-  const raw = process.env.FRONTEND_ORIGIN || '';
-  return raw
-    .split(/[,\s]+/)
-    .map(s => s.trim())
-    .filter(Boolean);
-}
-function patternToRegex(pattern) {
-  // escape regex, then make "*" match one subdomain level
-  const escaped = pattern.replace(/[.+?^${}()|[\]\\]/g, '\\$&').replace(/\\\*/g, '[^.]+');
-  return new RegExp(`^${escaped}$`);
-}
-
-const defaultLocal = ['http://localhost:3000'];
-const originPatterns = parseOriginsFromEnv();
-const originRegexes = originPatterns.filter(p => p.includes('*')).map(patternToRegex);
-const exactOrigins = originPatterns.filter(p => !p.includes('*'));
-const allowedList = [...defaultLocal, ...exactOrigins];
+// Allow only known origins (Vercel + local dev + env-provided)
+const allowList = new Set([
+  'https://sudhanshu-lumio.vercel.app',
+  'http://localhost:3000',
+  ...(Array.isArray(config?.ALLOWED_ORIGINS) ? config.ALLOWED_ORIGINS : []),
+]);
 
 const corsOptions = {
-  origin: (origin, callback) => {
-    if (!origin) return callback(null, true); // curl / server-to-server
-    const allowed =
-      allowedList.includes(origin) ||
-      originRegexes.some(rx => rx.test(origin));
-    return callback(null, allowed);
+  origin(origin, cb) {
+    if (!origin) return cb(null, true); // server-to-server or curl
+    if (allowList.has(origin)) return cb(null, true);
+    return cb(new Error(`Not allowed by CORS: ${origin}`));
   },
-  methods: ['GET', 'POST', 'OPTIONS'],
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  credentials: true,
+  maxAge: 86400,
+  optionsSuccessStatus: 204,
 };
 
-if (process.env.NODE_ENV !== 'test') {
-  console.log('CORS allowlist:', JSON.stringify(allowedList), 'patterns:', originPatterns.filter(p => p.includes('*')));
-}
-
+// Mount CORS BEFORE any routes
+const app = express();
 app.use(cors(corsOptions));
-app.options('*', cors(corsOptions)); // explicit preflight
+app.options('*', cors(corsOptions));
 app.use(express.json());
 
 
