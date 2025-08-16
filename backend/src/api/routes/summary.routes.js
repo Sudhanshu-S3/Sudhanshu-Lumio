@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const summaryController = require('../controllers/summary.controller.js');
+const summaryController = require('../controllers/summary.controller');
 
 // Setup checks 
 
