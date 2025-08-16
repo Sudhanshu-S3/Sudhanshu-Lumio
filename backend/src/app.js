@@ -5,31 +5,60 @@ import shareRoutes from './api/routes/share.routes.js';
 
 const app = express();
 
-// load frontend origins from env (comma-separated), fall back to default localhost
-const envOrigins = process.env.FRONTEND_ORIGIN
-  ? process.env.FRONTEND_ORIGIN.split(',').map(s => s.trim())
-  : [];
-const allowedOrigins = ['http://localhost:3000', ...envOrigins].filter(Boolean);
+// Parse FRONTEND_ORIGIN env (comma or space separated). Supports wildcard like https://*.vercel.app
+function parseOriginsFromEnv() {
+  const raw = process.env.FRONTEND_ORIGIN || '';
+  return raw
+    .split(/[,\s]+/)
+    .map(s => s.trim())
+    .filter(Boolean);
+}
+function patternToRegex(pattern) {
+  // escape regex, then make "*" match one subdomain level
+  const escaped = pattern.replace(/[.+?^${}()|[\]\\]/g, '\\$&').replace(/\\\*/g, '[^.]+');
+  return new RegExp(`^${escaped}$`);
+}
 
-app.use(cors({
+const defaultLocal = ['http://localhost:3000'];
+const originPatterns = parseOriginsFromEnv();
+const originRegexes = originPatterns.filter(p => p.includes('*')).map(patternToRegex);
+const exactOrigins = originPatterns.filter(p => !p.includes('*'));
+const allowedList = [...defaultLocal, ...exactOrigins];
+
+const corsOptions = {
   origin: (origin, callback) => {
-    // allow requests with no origin (e.g., curl, server-to-server)
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.includes(origin)) return callback(null, true);
-    callback(new Error('CORS policy: origin not allowed'));
+    if (!origin) return callback(null, true); // curl / server-to-server
+    const allowed =
+      allowedList.includes(origin) ||
+      originRegexes.some(rx => rx.test(origin));
+    return callback(null, allowed);
   },
   methods: ['GET', 'POST', 'OPTIONS'],
-}));
+};
+
+if (process.env.NODE_ENV !== 'test') {
+  console.log('CORS allowlist:', JSON.stringify(allowedList), 'patterns:', originPatterns.filter(p => p.includes('*')));
+}
+
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions)); // explicit preflight
 app.use(express.json());
 
 
-//Setup testing
-app.get('/', (req,res) => {
-    res.status(200).json({message:'AI Summarizer Backend is running!'});
-})
-
+// Health
+app.get('/', (req, res) => {
+  res.status(200).json({ message: 'AI Summarizer Backend is running!' });
+});
 
 app.use('/api/summary', summaryRoutes);
 app.use('/api/share', shareRoutes);
+
+// Optional: JSON error for CORS denials/others
+app.use((err, req, res, next) => {
+  if (err && err.message && err.message.toLowerCase().includes('cors')) {
+    return res.status(403).json({ error: 'CORS policy: origin not allowed' });
+  }
+  next(err);
+});
 
 export default app;
